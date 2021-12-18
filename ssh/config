@@ -1,0 +1,4 @@
+Host dev-machine
+	HostName dev-machine
+	IdentityFile ~/.ssh/keys/dev-machine.priv
+	user devuser

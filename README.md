@@ -70,6 +70,7 @@ This assumes you have a working libvirt VM running windows 10 named "win10-dev".
  - Modify the config to have a share where you typically build. I used /opt and disable all other shares including printer and home directories. (Example in etc/samba/smb.conf)
  - Create a hooks script and make it executable in ```/etc/libvirt/hooks/qemu``` (Example/Working in etc/libvirt/hooks/qemu)
  - Modify the default values in the build_exe.sh to fit your setup / build tools.
+ - Add the build_exe.sh to your build path for easier use.
 
 #### Configurables:
 The default values I used is available in the top of the file

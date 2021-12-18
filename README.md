@@ -1,7 +1,10 @@
 # Linux Libvirt Build Pipeline
+![](https://koloss.online/wp-content/uploads/2021/12/LinuxLibvirtPipelineDiagram.png)
 A build pipeline tool that utilizes libvirt to run a Windows VM and build executables
 
 This may not work for all projects but works well for compiling tools / exploits for Red Team/Pentesting and doesn't mean you won't ever have to touch the VM again to add packages but it is also a start for an easier building from linux. I will be expanding this as I run into issues or find improvements.
+
+A little write-up on this project: https://koloss.online/2021/12/17/linux-libvirt-build-pipeline/
 
 ## Usage:
 ```

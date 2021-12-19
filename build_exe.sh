@@ -4,15 +4,20 @@
 VIRSH_DOMAIN="win10-dev"
 SSH_NAME="dev-machine"
 DEF_MSBUILD='C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\msbuild.exe'
-DEF_OUTPUTDIR="bin/"
+DEF_OUTPUTDIR='bin\'
 DEF_BCONFIG="Release"
 DEF_BPLAT="x64"
-## This is the path you want to replace before
+## This is the path you want to replace for your share directory.
 Z_PATH="/opt/"
+CONFUSER_INSTALL='C:\ConfuserEx\'
+CONFUSER_PRESET="maximum"
 
 ## SSH PARAMS
 SSH_TIMEOUT=5
 SSH_RETRIES=3
+
+CONFUSER_RULES='<rule preset="none" pattern="true"><protection id="anti debug" /><protection id="anti dump" /><protection id="anti ildasm" /><protection id="anti tamper" /><protection id="constants" /><protection id="ctrl flow" /><protection id="invalid metadata" /><protection id="ref proxy" /><protection id="rename" /><protection id="resources" /></rule>'
+
 
 function print_help {
 	if [[ $1 ]]; then
@@ -29,6 +34,7 @@ function print_help {
 	echo -e "\t-d|--debug\t\tSet Build Configuration to 'Debug'. Cannot be used with -r"
 	echo -e "\t-p|--platform\t\tSet Build Platform.\n\t\t\t\tExpected Values: x86 | x64 (default) | AnyCpu"
 	echo -e "\t-m|--msbuild-path\tSet MSBuild.exe Path which inherently sets the version.\n\t\t\t\tExample: \"C:\Windows\Microsoft.NET\Framework64\\\v4.0.30319\MSBuild.exe\""
+	echo -e "\t-c|--confuser\t\tConfuser the files dropped. This uses the same rules as \"Maximum\" setting in gui"
 	echo -e "\t-o|--outputdir\t\tSet Windows output path for the build. Defaults to ./bin/<release/debug>."
 	echo -e "\t--dont-stop-vm\t\tIf set, this will not kill the vm after the build"
 }
@@ -111,6 +117,10 @@ while [[ $# -gt 0 ]]; do
 			DONT_STOP_VM=1
 			shift
 			;;
+		-c|--confuser)
+			USE_CONFUSER=1
+			shift
+			;;
 	esac
 done
 
@@ -131,7 +141,7 @@ if [[ -z $BUILD_PLAT ]]; then
 fi
 
 if [[ -z $OUTPUT_DIR ]]; then
-	OUTPUT_DIR="$DEF_OUTPUTDIR$DEF_BPLAT/$BUILD_CONFIG/"
+	OUTPUT_DIR="$DEF_OUTPUTDIR$DEF_BPLAT\\$BUILD_CONFIG\\"
 	echo "[-] Output Directory not set, using default ($OUTPUT_DIR)."
 else
 	OUTPUT_DIR+=$DEF_BPLAT'\'$BUILD_CONFIG'\'
@@ -158,6 +168,25 @@ function start_vm {
 
 function stop_vm {
 	sudo virsh shutdown "$VIRSH_DOMAIN" --mode acpi
+}
+
+function build_confuser_file {
+	echo "[+] Building confuser csproj file..."
+	OUTPUT_LOC=$(echo $OUTPUT_DIR | sed -E "s/\\\/\//g")
+	BUILD_LOC=$(echo "$BUILD_DIR" | sed -E "s/$BUILD_FILE//g")
+	CONFUSER_STRING="<project baseDir='$1' outputDir='$1confused\' xmlns='http://confuser.codeplex.com'>"
+	CONFUSER_STRING+="<rule pattern='true' preset='$CONFUSER_PRESET' inherit='false' />"
+	for x in $(ls "$BUILD_LOC$OUTPUT_LOC"); do
+		filetype=$(file "$BUILD_LOC$OUTPUT_LOC$x" | grep PE32)
+		if [[ ! -z $filetype ]]; then
+			echo "[DEBUG] Filetype: '$filetype'"
+			echo "[+] Adding '$x' to confuser file..."
+			CONFUSER_STRING+="<module path='$x' />"
+		fi
+	done
+	CONFUSER_STRING+="</project>"
+	echo "[+] Writing confuser.crproj ($BUILD_LOC$OUTPUT_LOC)"
+	echo $CONFUSER_STRING > $BUILD_LOC$OUTPUT_LOC/confuser.crproj
 }
 
 ## Check the vm - if it isn't started, start it.
@@ -189,7 +218,14 @@ done
 
 if [[ $SSH_READY > 0 ]]; then
 	echo "[+] SSH Ready, Running build command ($BUILD_STRING) in $BUILD_CD"
+	echo "[DEBUG] Build_cd: $BUILD_CD"
 	ssh $SSH_NAME "cd '$BUILD_CD'; $BUILD_STRING"
+	if [[ $USE_CONFUSER ]]; then
+		build_confuser_file "$BUILD_CD$OUTPUT_DIR"
+		CONFUSER_BUILD_STRING="Confuser.CLI.exe -noPause $(echo $BUILD_CD$OUTPUT_DIR)confuser.crproj"
+		echo "[+] Executing confuser in '$BUILD_CD$OUTPUT_DIR' ('$CONFUSER_BUILD_STRING') "
+		ssh $SSH_NAME "cd '$CONFUSER_INSTALL'; .\\$CONFUSER_BUILD_STRING"
+	fi
 else
 	echo -e "[!] SSH did not initialize!"
 fi

@@ -2,12 +2,14 @@
 ![](https://koloss.online/wp-content/uploads/2021/12/LinuxLibvirtPipelineDiagram.png)
 A build pipeline tool that utilizes libvirt to run a Windows VM and build executables
 
-This may not work for all projects but works well for compiling tools / exploits for Red Team/Pentesting and doesn't mean you won't ever have to touch the VM again to add packages but it is also a start for an easier building from linux. I will be expanding this as I run into issues or find improvements. For Example, I want to add confuser switches to the script as well as other obfuscation techniques.
+This may not work for all projects but works well for compiling tools / exploits for Red Team/Pentesting and doesn't mean you won't ever have to touch the VM again to add packages but it is also a start for an easier building from linux. I will be expanding this as I run into issues or find improvements. For Example, I want to add other obfuscation techniques.
 
 A little write-up on this project: https://koloss.online/2021/12/17/linux-libvirt-build-pipeline/
 
 ## Usage:
 ```
+[!] Error: No build path specified!
+
 ################################################
 ############ Linux Libvirt Pipeline ############
 ################################################
@@ -16,7 +18,7 @@ A build pipeline tool that utilizes libvirt to run
 A Windows VM and build executables
 
 Required Parameters: 
-	-b|--build		Specify the build's csproj file
+	-b|--build		Specify the build's csproj file location
 
 Optional Parameters: 
 	-r|--release		Set Build Configuration to 'Release'. Cannot be used with -d. (default)
@@ -25,9 +27,9 @@ Optional Parameters:
 				Expected Values: x86 | x64 (default) | AnyCpu
 	-m|--msbuild-path	Set MSBuild.exe Path which inherently sets the version.
 				Example: "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\MSBuild.exe"
+	-c|--confuser		Confuser the files dropped. This uses the same rules as "Maximum" setting in gui
 	-o|--outputdir		Set Windows output path for the build. Defaults to ./bin/<release/debug>.
 	--dont-stop-vm		If set, this will not kill the vm after the build
-
 ```
 
 ## Features:
@@ -35,6 +37,9 @@ Optional Parameters:
 	- Automatically Start/Stop smbD using libvirt hooks
 	- Auto mouting the SMB share.
 	- Utilizes SSH to vm into VM and run build tools
+	- ConfuserEx support:
+		- Creates a crproj file in the build directory
+		- Iterates over the files to find all PE32 files.
 
 
 ## Setup:

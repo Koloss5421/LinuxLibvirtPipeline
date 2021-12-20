@@ -8,8 +8,6 @@ A little write-up on this project: https://koloss.online/2021/12/17/linux-libvir
 
 ## Usage:
 ```
-[!] Error: No build path specified!
-
 ################################################
 ############ Linux Libvirt Pipeline ############
 ################################################

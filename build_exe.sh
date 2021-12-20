@@ -154,7 +154,7 @@ fi
 
 function check_vm_status {
 	echo "[+] Checking VM Status..."
-	VIRSH_LIST=$(virsh list | grep "$VIRSH_DOMAIN")
+	VIRSH_LIST=$(sudo virsh list | grep "$VIRSH_DOMAIN")
 	if [[ -z $VIRSH_LIST ]]; then
 		VM_STATUS=0
 	else
@@ -191,7 +191,7 @@ function build_confuser_file {
 
 ## Check the vm - if it isn't started, start it.
 check_vm_status
-if [[ $VM_STATUS == 0 ]]; then
+if [[ "$VM_STATUS" == 0 ]]; then
 	echo "[+] VM is not active. Starting..."
 	start_vm
 else
@@ -199,10 +199,10 @@ else
 fi
 
 BUILD_FILE=$(echo "$BUILD_DIR" | rev | cut -d '/' -f 1 | rev)
-BUILD_CD=$(echo "$BUILD_DIR" | sed -E "s/$BUILD_FILE//g" | sed -E "s/\/opt/Z:/g" | sed -E "s/\//\\\/g" )
+BUILD_CD=$(echo "$BUILD_DIR" | sed -E "s/$BUILD_FILE//g" | sed -E "s/$(echo $Z_PATH | sed -e "s/\\//\\\\\//g")/Z:\//g" | sed -E "s/\//\\\/g" )
 BUILD_STRING=".'$MSBUILD_PATH' './$BUILD_FILE' /p:Configuration=$BUILD_CONFIG,OutputPath='$OUTPUT_DIR' /p:Platform='$BUILD_PLAT'"
 
-SSH_READY=0
+SSH_READ=0
 while [[ $SSH_RETRIES > 0 ]]; do
 	TEST_SSH=$(ssh -o ConnectTimeout=$SSH_TIMEOUT $SSH_NAME "exit")
 

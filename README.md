@@ -60,10 +60,12 @@ This assumes you have a working libvirt VM running windows 10 named "win10-dev".
  - Set Powershell Execution policy to prevent future issues: ```Set-ExecutionPolicy Unrestricted```
  - Set OpenSSH Default shell to powershell with Regedit: ```/HKLM/SOFTWARE/OpenSSH/DefaultShell``` -> ```C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe```
  - Allow Linked Connections: ```reg add "HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System" /v "EnableLinkedConnections" /t REG_DWORD /d 0x00000001 /f```
+ - To prevent issues from future versions add ```<loadFromRemoteSources enabled="true"/>``` to ```%windir%\Microsoft.NET\Framework\[version]\config\machine.config``` (32 bit) and ```%windir%\Microsoft.NET\Framework64\[version]\config\machine.config``` (64bit) under the 'runtime' tag. Otherwise this could result in an exception from HRESULT: 0x80131515.
  - *Recommended:*
  	- Assuming you use this for a similar purpose, Disable Defender using Group Policy
  	- Administrative Templates > Windows Components > Windows Defender Antivirus > Turn off Windows Defender Antivirus = Enabled
  	- Administrative Templates > Windows Components > Windows Defender Antivirus > Real-Time Protection > Turn off real-time protection = Enabled
+ - Download and extract confuserEx into your favorite directory (I chose C:\ConfuserEx\).
 
 #### Linux Host:
  - Add a hostname / ip to your ```/etc/hosts``` file.

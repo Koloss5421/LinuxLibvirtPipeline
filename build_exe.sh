@@ -3,7 +3,8 @@
 ## Config
 VIRSH_DOMAIN="win10-dev"
 SSH_NAME="dev-machine"
-DEF_MSBUILD='C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\msbuild.exe'
+#DEF_MSBUILD='C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\msbuild.exe'
+DEF_MSBUILD='C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\msbuild.exe'
 DEF_OUTPUTDIR='bin\'
 DEF_BCONFIG="Release"
 DEF_BPLAT="x64"
@@ -15,9 +16,6 @@ CONFUSER_PRESET="maximum"
 ## SSH PARAMS
 SSH_TIMEOUT=5
 SSH_RETRIES=3
-
-CONFUSER_RULES='<rule preset="none" pattern="true"><protection id="anti debug" /><protection id="anti dump" /><protection id="anti ildasm" /><protection id="anti tamper" /><protection id="constants" /><protection id="ctrl flow" /><protection id="invalid metadata" /><protection id="ref proxy" /><protection id="rename" /><protection id="resources" /></rule>'
-
 
 function print_help {
 	if [[ $1 ]]; then
@@ -54,10 +52,8 @@ while [[ $# -gt 0 ]]; do
 			exit
 			;;
 		-b|--buildir)
-			echo "$2"
 			if [[ "$2" =~ ^\. ]]; then
 				BUILD_DIR=$(readlink -f $2)
-				echo $BUILD_DIR
 			else
 				BUILD_DIR="$2"
 			fi
@@ -176,10 +172,10 @@ function build_confuser_file {
 	BUILD_LOC=$(echo "$BUILD_DIR" | sed -E "s/$BUILD_FILE//g")
 	CONFUSER_STRING="<project baseDir='$1' outputDir='$1confused\' xmlns='http://confuser.codeplex.com'>"
 	CONFUSER_STRING+="<rule pattern='true' preset='$CONFUSER_PRESET' inherit='false' />"
+	CONFUSER_STRING+="<packer id='compressor' />"
 	for x in $(ls "$BUILD_LOC$OUTPUT_LOC"); do
 		filetype=$(file "$BUILD_LOC$OUTPUT_LOC$x" | grep PE32)
 		if [[ ! -z $filetype ]]; then
-			echo "[DEBUG] Filetype: '$filetype'"
 			echo "[+] Adding '$x' to confuser file..."
 			CONFUSER_STRING+="<module path='$x' />"
 		fi
@@ -198,9 +194,14 @@ else
 	echo "[-] VM Already started. Skipping..."
 fi
 
+DISABLE_FODY=""
+if [[ $USE_CONFUSER ]]; then
+	DISABLE_FODY=" /p:DisableFody='true'"
+fi
+
 BUILD_FILE=$(echo "$BUILD_DIR" | rev | cut -d '/' -f 1 | rev)
 BUILD_CD=$(echo "$BUILD_DIR" | sed -E "s/$BUILD_FILE//g" | sed -E "s/$(echo $Z_PATH | sed -e "s/\\//\\\\\//g")/Z:\//g" | sed -E "s/\//\\\/g" )
-BUILD_STRING=".'$MSBUILD_PATH' './$BUILD_FILE' /p:Configuration=$BUILD_CONFIG,OutputPath='$OUTPUT_DIR' /p:Platform='$BUILD_PLAT'"
+BUILD_STRING=".'$MSBUILD_PATH' './$BUILD_FILE' /p:Configuration=$BUILD_CONFIG,OutputPath='$OUTPUT_DIR' /p:Platform='$BUILD_PLAT'$DISABLE_FODY"
 
 SSH_READ=0
 while [[ $SSH_RETRIES > 0 ]]; do
@@ -218,7 +219,6 @@ done
 
 if [[ $SSH_READY > 0 ]]; then
 	echo "[+] SSH Ready, Running build command ($BUILD_STRING) in $BUILD_CD"
-	echo "[DEBUG] Build_cd: $BUILD_CD"
 	ssh $SSH_NAME "cd '$BUILD_CD'; $BUILD_STRING"
 	if [[ $USE_CONFUSER ]]; then
 		build_confuser_file "$BUILD_CD$OUTPUT_DIR"

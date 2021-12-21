@@ -80,15 +80,18 @@ This assumes you have a working libvirt VM running windows 10 named "win10-dev".
 #### Configurables:
 The default values I used is available in the top of the file
 ```
-VIRSH_DOMAIN="win10-dev" ## your libvirt vm domain
-SSH_NAME="dev-machine" ## Whatever you named it in /etc/hosts
-DEF_MSBUILD='C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\MSBuild\15.0\Bin\msbuild.exe' ## This path varies based on version
-DEF_OUTPUTDIR="bin/" ## This is used along with DEF_BCONFIG AND DEF_BPLAT to mkae a standard deployment path in the working directory
-DEF_BCONFIG="Release" ## This is usually either Release or Debug
-DEF_BPLAT="x64" ## This could also be ARM or something similar but I didn't build that into the script
+VIRSH_DOMAIN="win10-dev" # Your VM name / domain
+SSH_NAME="dev-machine" # The name of your machine from /etc/hosts
+DEF_MSBUILD='C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\msbuild.exe' # The MSBuild version you want to use by default
+DEF_OUTPUTDIR='bin\' # The windows path you want the built exe to be
+DEF_BCONFIG="Release" # The default build type
+DEF_BPLAT="x64" # This is the platform you wish to deploy this
+Z_PATH="/opt/" # The path to your linux share. Ensures you only give paths that work in the windows host
+CONFUSER_INSTALL='C:\ConfuserEx\' # your confuser install location
+CONFUSER_PRESET="maximum" # the preset you want to use with confuser.
 
-Z_PATH="/opt/" ## This should be the path to your shared folder. Helps the script make sure the VM can access the file you want to build.
+## SSH PARAMS
+SSH_TIMEOUT=5
+SSH_RETRIES=3
 
-SSH_TIMEOUT=5 ## How long should the SSH timeout if your vm isn't ready
-SSH_RETRIES=3 ## max times the script tries to login - ususally takes 2 but could vary based on system specs.
 ```

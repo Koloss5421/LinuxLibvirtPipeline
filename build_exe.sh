@@ -172,9 +172,12 @@ function build_confuser_file {
 	BUILD_LOC=$(echo "$BUILD_DIR" | sed -E "s/$BUILD_FILE//g")
 	CONFUSER_STRING="<project baseDir='$1' outputDir='$1confused\' xmlns='http://confuser.codeplex.com'>"
 	CONFUSER_STRING+="<rule pattern='true' preset='$CONFUSER_PRESET' inherit='false' />"
-	CONFUSER_STRING+="<packer id='compressor' />"
-	for x in $(ls "$BUILD_LOC$OUTPUT_LOC"); do
-		filetype=$(file "$BUILD_LOC$OUTPUT_LOC$x" | grep PE32)
+	#CONFUSER_STRING+="<packer id='compressor' />"
+	## Changed this to exe only for now to see if that works better.
+	echo "Looking for $( echo $BUILD_LOC$OUTPUT_LOC)*.exe"
+	for x in $(ls $BUILD_LOC$OUTPUT_LOC*.exe); do
+		#filetype=$(file "$BUILD_LOC$OUTPUT_LOC$x" | grep PE32)
+		filetype="good"
 		if [[ ! -z $filetype ]]; then
 			echo "[+] Adding '$x' to confuser file..."
 			CONFUSER_STRING+="<module path='$x' />"
